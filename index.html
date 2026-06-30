@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The AI Agents Stack 2026 — Decision Explorer</title>
+<style>
+  :root{
+    --bg:#0c0e14; --panel:#141823; --panel2:#1b2030; --line:#272d3d;
+    --ink:#e8ecf4; --muted:#8e97ad; --faint:#5e6781;
+    --acc:#7c9cff; --acc2:#5ee0c0; --warn:#ffb454; --bad:#ff6b81; --good:#5ee08a;
+    --l1:#6ea8fe; --l2:#5ee0c0; --l3:#c98bff; --l4:#ffb454; --l5:#ff8fa3; --l6:#ff6b81;
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:radial-gradient(1200px 700px at 80% -10%,#16203a 0%,var(--bg) 55%);color:var(--ink);
+    font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;padding:0 0 90px}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 22px}
+  header.hero{padding:30px 0 26px}
+  .companion{background:#15212e;border:1px solid #25384a;border-left:3px solid var(--acc2);
+    border-radius:10px;padding:11px 15px;font-size:13px;color:var(--muted);margin-bottom:22px;max-width:780px}
+  .companion a{color:var(--acc2);text-decoration:none;border-bottom:1px solid #2c4f48}
+  .companion a:hover{border-color:var(--acc2)}
+  .kicker{font-size:12.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--acc2);font-weight:700}
+  h1{font-size:clamp(28px,4.4vw,44px);line-height:1.08;margin:10px 0 8px;letter-spacing:-.02em}
+  h1 .sub{color:var(--muted);font-weight:500;display:block;font-size:.46em;letter-spacing:0;margin-top:12px;line-height:1.5;max-width:760px}
+  .src{color:var(--faint);font-size:13px;margin-top:14px}
+  .src a{color:var(--acc);text-decoration:none;border-bottom:1px solid #2c3a63}
+  .src a:hover{border-color:var(--acc)}
+
+  nav.tabs{position:sticky;top:0;z-index:30;background:rgba(12,14,20,.82);backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--line);margin-top:22px}
+  nav.tabs .wrap{display:flex;gap:6px;overflow-x:auto;padding:9px 22px}
+  .tab{flex:0 0 auto;background:transparent;border:1px solid transparent;color:var(--muted);
+    padding:9px 16px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;white-space:nowrap;transition:.15s}
+  .tab:hover{color:var(--ink);background:var(--panel)}
+  .tab.active{color:var(--ink);background:var(--panel2);border-color:var(--line)}
+
+  section.view{display:none;padding-top:34px}
+  section.view.active{display:block;animation:fade .35s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .lead{color:var(--muted);max-width:760px;margin:-6px 0 26px;font-size:15.5px}
+  h2.vh{font-size:24px;letter-spacing:-.01em;margin:0 0 6px}
+
+  /* DECIDE */
+  .quiz{display:grid;grid-template-columns:1fr;gap:14px;max-width:740px}
+  .q{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px}
+  .q .qn{font-size:12px;color:var(--acc2);font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+  .q .qt{font-size:16.5px;font-weight:600;margin:6px 0 14px}
+  .opts{display:flex;flex-wrap:wrap;gap:9px}
+  .opt{flex:1 1 0;min-width:150px;background:var(--panel2);border:1.5px solid var(--line);border-radius:11px;
+    padding:12px 14px;cursor:pointer;transition:.15s;font-size:14px;color:var(--ink)}
+  .opt small{display:block;color:var(--faint);font-size:12.5px;margin-top:3px;line-height:1.4}
+  .opt:hover{border-color:var(--acc);background:#1f2740}
+  .opt.sel{border-color:var(--acc);background:linear-gradient(180deg,#22305a,#1b2336);box-shadow:0 0 0 1px var(--acc) inset}
+  .verdict{margin-top:22px;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;
+    opacity:.35;pointer-events:none;transition:.4s;max-width:740px}
+  .verdict.live{opacity:1;pointer-events:auto}
+  .verdict .vtop{padding:18px 22px;background:linear-gradient(120deg,#1c2540,#181c2a)}
+  .verdict .vlabel{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .verdict h3{margin:4px 0 0;font-size:23px;letter-spacing:-.01em}
+  .verdict .vbody{padding:18px 22px;border-top:1px solid var(--line)}
+  .pill{display:inline-block;font-size:12.5px;font-weight:700;padding:5px 11px;border-radius:999px;
+    background:#202842;color:var(--acc2);margin:0 6px 6px 0;border:1px solid #2b3a5e}
+  .vbody .stack-line{font-size:15px;margin:2px 0 14px}
+  .vbody .stack-line b{color:var(--acc2)}
+  .mini{color:var(--muted);font-size:14px}
+  .btn{display:inline-block;margin-top:14px;background:var(--acc);color:#0b1020;font-weight:700;border:none;
+    padding:10px 16px;border-radius:10px;cursor:pointer;font-size:14px;text-decoration:none}
+  .btn:hover{filter:brightness(1.08)}
+  .reset{background:transparent;border:1px solid var(--line);color:var(--muted);margin-left:8px}
+
+  /* ARCHETYPES */
+  .arch-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px}
+  .acard{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:0;overflow:hidden;
+    display:flex;flex-direction:column;cursor:pointer;transition:.18s}
+  .acard:hover{transform:translateY(-3px);border-color:var(--acc)}
+  .acard.sel{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset,0 10px 30px -12px rgba(124,156,255,.5)}
+  .acard.sel .ah{background:linear-gradient(180deg,#202b4d,#171b29)}
+  .acard.sel::before{content:"● Selected";position:absolute;top:10px;right:12px;font-size:10.5px;font-weight:800;
+    letter-spacing:.06em;color:var(--acc);text-transform:uppercase}
+  .acard{position:relative}
+  .acard .ah{padding:16px 18px 14px;border-bottom:1px solid var(--line)}
+  .acard .anum{font-size:12px;color:var(--faint);font-weight:700}
+  .acard h3{margin:5px 0 4px;font-size:18.5px;letter-spacing:-.01em}
+  .acard .atag{font-size:13px;color:var(--muted)}
+  .acard .ab{padding:14px 18px;font-size:13.5px;color:var(--muted);flex:1}
+  .layers-mini{display:flex;gap:4px;margin-top:12px}
+  .lm{flex:1;height:7px;border-radius:3px;background:#222a3c}
+  .effort{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:11px 18px;border-top:1px solid var(--line)}
+
+  /* layer stack diagram */
+  .stackviz{display:flex;flex-direction:column-reverse;gap:7px;margin:8px 0 0}
+  .lrow{display:flex;align-items:center;gap:13px;background:var(--panel);border:1px solid var(--line);
+    border-radius:11px;padding:11px 15px;cursor:pointer;transition:.15s;position:relative;overflow:hidden}
+  .lrow:hover{border-color:var(--acc);background:var(--panel2)}
+  .lrow .ldot{width:11px;height:11px;border-radius:3px;flex:0 0 auto}
+  .lrow .lname{font-weight:650;font-size:15px;flex:0 0 auto;width:172px}
+  .lrow .ldesc{color:var(--muted);font-size:13px;flex:1;min-width:0}
+  .lrow .lnum{color:var(--faint);font-size:12px;font-weight:700;width:18px}
+  .lrow.dim{opacity:.34}
+  .lrow .req{font-size:10.5px;font-weight:800;letter-spacing:.06em;padding:3px 8px;border-radius:6px;flex:0 0 auto}
+  .req.core{background:#1c3a30;color:var(--good)}
+  .req.opt{background:#2a2433;color:var(--muted)}
+  .req.skip{background:#241c24;color:var(--faint)}
+
+  /* LAYER DEEP DIVE */
+  .layer-detail{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin-top:18px;display:none}
+  .layer-detail.open{display:block;animation:fade .3s}
+  .ld-head{display:flex;align-items:flex-start;gap:13px;flex-wrap:wrap}
+  .ld-head .ldot{width:15px;height:15px;border-radius:4px;margin-top:5px}
+  .ld-head h3{margin:0;font-size:22px}
+  .ld-head .sub{color:var(--muted);font-size:14px;margin-top:3px;max-width:640px}
+  .scores{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0}
+  .score{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:13px 14px}
+  .score .sl{font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .score .sv{font-size:15px;font-weight:700;margin:7px 0 8px}
+  .bar{height:8px;border-radius:5px;background:#222a3c;overflow:hidden}
+  .bar > i{display:block;height:100%;border-radius:5px}
+  .score .note{font-size:12px;color:var(--faint);margin-top:8px;line-height:1.4}
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:6px}
+  .box{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:14px 16px}
+  .box h4{margin:0 0 9px;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .box ul{margin:0;padding-left:17px}
+  .box li{margin:5px 0;font-size:13.5px}
+  .pros li::marker{color:var(--good)}
+  .cons li::marker{color:var(--bad)}
+  .players{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px}
+  .chip{font-size:12.5px;background:#1d2336;border:1px solid var(--line);border-radius:7px;padding:5px 10px;color:var(--ink)}
+  .honest{margin-top:18px;border-left:3px solid var(--acc2);background:#13211e;padding:13px 16px;border-radius:0 10px 10px 0}
+  .honest .hl{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--acc2);font-weight:800}
+  .honest p{margin:6px 0 0;font-size:14.5px;font-style:italic}
+  .unsolved{margin-top:14px;font-size:13.5px;color:var(--warn)}
+  .unsolved b{color:var(--warn)}
+  .ext{margin-top:14px;background:#1a1422;border:1px solid #3a2b46;border-radius:11px;padding:13px 16px}
+  .ext .el{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#c98bff;font-weight:800}
+  .ext p{margin:7px 0 0;font-size:13.5px;color:#d9cce6}
+  .ext a{color:#c98bff}
+
+  /* MATRIX */
+  .matrix-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius)}
+  table.mx{border-collapse:collapse;width:100%;min-width:640px;font-size:13.5px}
+  table.mx th,table.mx td{padding:12px 13px;text-align:center;border-bottom:1px solid var(--line)}
+  table.mx thead th{background:var(--panel2);font-size:12.5px;color:var(--muted);position:sticky;top:0}
+  table.mx th.row{text-align:left;background:var(--panel);font-weight:650;color:var(--ink);min-width:150px}
+  table.mx td .cell{display:inline-block;width:100%;border-radius:7px;padding:7px 4px;font-weight:700;font-size:12px}
+  .c-core{background:#163528;color:var(--good)}
+  .c-opt{background:#2a2433;color:#b9a8d6}
+  .c-skip{background:#171a24;color:var(--faint)}
+  .axis-cell{font-size:12px;font-weight:700}
+
+  .callout{background:linear-gradient(120deg,#1a2238,#15192a);border:1px solid var(--line);border-radius:var(--radius);
+    padding:20px 22px;margin-top:20px}
+  .callout h4{margin:0 0 8px;font-size:16px;color:var(--acc2)}
+  .callout p{margin:8px 0;color:var(--muted);font-size:14.5px}
+
+  .case{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:8px}
+  .ccard{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--acc);border-radius:11px;padding:14px 16px}
+  .ccard .cn{font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .ccard h4{margin:5px 0 7px;font-size:15.5px}
+  details.compare{margin-top:30px;border-top:1px solid var(--line);padding-top:18px}
+  details.compare > summary{cursor:pointer;font-weight:650;font-size:15px;color:var(--acc);list-style:none;display:inline-block;padding:8px 0}
+  details.compare > summary::-webkit-details-marker{display:none}
+  details.compare > summary:hover{color:var(--ink)}
+  details.compare[open] > summary{color:var(--ink);margin-bottom:6px}
+  .arch-placeholder{border:1px dashed var(--line);border-radius:var(--radius);padding:26px 22px;text-align:center;
+    color:var(--faint);font-size:14px;background:rgba(20,24,35,.4)}
+  .ccard p{margin:0;font-size:13.5px;color:var(--muted)}
+
+  .foot{margin-top:40px;padding-top:22px;border-top:1px solid var(--line);color:var(--faint);font-size:13px}
+  .foot a{color:var(--acc);text-decoration:none}
+  .hint{font-size:13px;color:var(--faint);margin:4px 0 18px}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin:10px 0 2px}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+  @media(max-width:680px){.scores,.twocol{grid-template-columns:1fr}.lrow .lname{width:auto}}
+</style>
+</head>
+<body>
+
+<header class="hero"><div class="wrap">
+  <div class="companion">Unofficial interactive companion to Paolo Perrone's article <a href="https://theaiengineer.substack.com/p/the-ai-agents-stack-2026-edition" target="_blank" rel="noopener">"The AI Agents Stack (2026 Edition)"</a>. All concepts, structure, and quoted "honest takes" are his; this tool reorganizes them into a visual decision aid. Read the original first.</div>
+  <div class="kicker">Decision Explorer</div>
+  <h1>The AI Agents Stack — 2026
+    <span class="sub">Six layers sit between an LLM and a production agent. The trap is building all six. This walks you from "what am I building?" to the exact layers that matter, the architecture underneath, and the honest trade-offs at each one.</span>
+  </h1>
+  <div class="src">Built from Paolo Perrone, <a href="https://theaiengineer.substack.com/p/the-ai-agents-stack-2026-edition" target="_blank" rel="noopener">"The AI Agents Stack (2026 Edition)"</a> (The AI Engineer, Jun 2026), with data woven in from Endor Labs, LangChain's State of Agent Engineering, OWASP, and Letta.</div>
+</div></header>
+
+<nav class="tabs"><div class="wrap">
+  <button class="tab active" data-v="decide">1 · Decide your path</button>
+  <button class="tab" data-v="arch">2 · The four archetypes</button>
+  <button class="tab" data-v="layers">3 · Layer deep-dive</button>
+</div></nav>
+
+<main class="wrap">
+
+<!-- ===================== VIEW 1: DECIDE ===================== -->
+<section class="view active" id="decide">
+  <h2 class="vh">What are you actually building?</h2>
+  <p class="lead">This is the decision that cuts through framework confusion. A tool-calling chatbot and a multi-agent research system share almost no infrastructure. Answer three questions and you land on one of four archetypes — each pointing at a different subset of layers.</p>
+
+  <div class="quiz">
+    <div class="q" data-q="memory">
+      <div class="qn">Question 1 — State</div>
+      <div class="qt">Does it need to remember or learn across sessions?</div>
+      <div class="opts">
+        <div class="opt" data-val="no">No, each request stands alone<small>Looks something up, answers, forgets</small></div>
+        <div class="opt" data-val="yes">Yes, it improves over time<small>Remembers preferences, gets better at your codebase, tracks context for weeks</small></div>
+      </div>
+    </div>
+    <div class="q" data-q="steps">
+      <div class="qn">Question 2 — Control flow</div>
+      <div class="qt">Are there multiple steps that depend on each other and can fail mid-way?</div>
+      <div class="opts">
+        <div class="opt" data-val="no">No, one call does it<small>A single tool call or reasoning step</small></div>
+        <div class="opt" data-val="yes">Yes, multi-step with approvals<small>Steps chain, things break mid-run, a human may need to approve before it acts</small></div>
+      </div>
+    </div>
+    <div class="q" data-q="agents">
+      <div class="qn">Question 3 — Coordination</div>
+      <div class="qt">Do multiple agents delegate to each other?</div>
+      <div class="opts">
+        <div class="opt" data-val="no">No, a single agent<small>One reasoning loop owns the task</small></div>
+        <div class="opt" data-val="yes">Yes, agents hand off work<small>Specialists split a task, parallel workstreams, supervisor patterns</small></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="verdict" id="verdict">
+    <div class="vtop">
+      <div class="vlabel">Your archetype</div>
+      <h3 id="v-name">Answer the questions above</h3>
+    </div>
+    <div class="vbody">
+      <div id="v-stack" class="stack-line"></div>
+      <div id="v-pills"></div>
+      <div id="v-mini" class="mini"></div>
+      <a class="btn" id="v-go" href="#">See the architecture →</a>
+      <button class="btn reset" id="v-reset">Reset</button>
+    </div>
+  </div>
+
+  <p class="hint" style="margin-top:26px">Rule of thumb from the piece: <b style="color:var(--ink)">add complexity when something specific breaks, not before.</b> Most teams overbuild the simple case and underbuild the hard one.</p>
+</section>
+
+<!-- ===================== VIEW 2: ARCHETYPES ===================== -->
+<section class="view" id="arch">
+  <h2 class="vh">The four archetypes</h2>
+  <p class="lead">Click any archetype to see its layer stack. Green layers are where you invest; dimmed layers you can skip until something forces the issue.</p>
+  <div class="arch-grid" id="archGrid"></div>
+
+  <div id="archDetail" style="margin-top:24px">
+    <div class="arch-placeholder">Select an archetype above (or run the questions in step 1) to see its layer stack and the hard part.</div>
+  </div>
+
+  <details class="compare" id="compareBlock">
+    <summary>Compare all four at a glance →</summary>
+    <p class="lead" style="margin:14px 0 12px">Which layers each archetype needs. <span style="color:var(--good)">Core</span> = invest here. <span style="color:#b9a8d6">Light</span> = light touch. <span style="color:var(--faint)">Skip</span> = not until it breaks. Right-hand columns show how each layer scores on the three axes.</p>
+    <div class="matrix-wrap">
+      <table class="mx" id="mxTable"></table>
+    </div>
+  </details>
+</section>
+
+<!-- ===================== VIEW 3: LAYERS ===================== -->
+<section class="view" id="layers">
+  <h2 class="vh">The six layers, bottom-up</h2>
+  <p class="lead">Ordered from most stable (models) to least mature (guardrails). Each scored on the three questions that decide where to invest: how much <b>state</b> you manage, how much <b>lock-in</b> you take on, and how big the <b>demo-to-production gap</b> is. Click a layer.</p>
+  <div class="legend">
+    <span><i style="background:var(--l1)"></i>Models</span>
+    <span><i style="background:var(--l2)"></i>Protocols &amp; tools</span>
+    <span><i style="background:var(--l3)"></i>Memory</span>
+    <span><i style="background:var(--l4)"></i>Frameworks</span>
+    <span><i style="background:var(--l5)"></i>Eval</span>
+    <span><i style="background:var(--l6)"></i>Guardrails</span>
+  </div>
+  <div class="stackviz" id="layerStack"></div>
+  <div class="layer-detail" id="layerDetail"></div>
+
+  <div class="callout" style="margin-top:26px">
+    <h4>Where this is all heading</h4>
+    <p>Most teams build like it is still 2024: they pick LangGraph before they know if they need state, add a vector database before they outgrow Postgres, and design multi-agent architectures before shipping one agent that works. The gap is not talent or budget. It is knowing which layers matter for your specific agent instead of half-building all six.</p>
+    <p>The stack is going to collapse. Provider SDKs are already absorbing memory, tool calling, and basic eval into a single API. By early 2027, most teams will take an opinionated stack from their model provider and that will be fine for ~80% of use cases. The other 20% — agents at scale where the defaults break — will still build custom at every layer. Even then, when something fails in production, you need to know which layer failed. That is what these three steps are for.</p>
+  </div>
+</section>
+
+<div class="foot wrap">
+  Source article: <a href="https://theaiengineer.substack.com/p/the-ai-agents-stack-2026-edition" target="_blank" rel="noopener">The AI Agents Stack (2026 Edition)</a> · Paolo Perrone, The AI Engineer.
+  Supporting data: <a href="https://www.endorlabs.com/learn/classic-vulnerabilities-meet-ai-infrastructure-why-mcp-needs-appsec" target="_blank" rel="noopener">Endor Labs MCP analysis</a> ·
+  <a href="https://www.langchain.com/state-of-agent-engineering" target="_blank" rel="noopener">LangChain State of Agent Engineering</a> ·
+  <a href="https://github.com/OWASP/www-project-mcp-top-10/" target="_blank" rel="noopener">OWASP MCP Top 10</a> ·
+  <a href="https://www.letta.com/blog/ai-agents-stack" target="_blank" rel="noopener">Letta 2024 stack</a>.
+</div>
+
+</main>
+
+<script>
+/* ---------------- DATA ---------------- */
+const LAYERS = [
+  { id:1, key:"models", name:"Models & inference", color:"var(--l1)",
+    sub:"How you run the model that powers your agent: call an API, use a managed open-weight provider, or self-host.",
+    state:{v:"None",pct:8,note:"API calls are stateless. Send a request, get a response. Nothing to manage."},
+    lock:{v:"High (closed) / Low (open)",pct:70,note:"Each closed model reasons differently — switching means retuning prompts and re-running your eval suite. Open weights: swap the model, keep the infra."},
+    gap:{v:"Smallest",pct:10,note:"Your demo API call is the same as your production API call."},
+    players:["OpenAI","Anthropic / Claude extended thinking","o1, o3","DeepSeek R1 / V3","Llama 3.3","Qwen 2.5","vLLM","SGLang","Ollama","Together · Fireworks · Groq"],
+    pros:["Most commoditized, most stable layer in the stack","Reasoning models collapse multi-step chains into a single call","Open weights closed the quality gap — 'always use the biggest closed model' is dead"],
+    cons:["Closed-API lock-in is real: prompts and failure modes do not port","Cost and latency, not 'smartness', is the actual decision","Self-hosting only pays off at high volume or sub-100ms latency needs"],
+    honest:"This layer is commoditizing. Model differences matter less each quarter. The real decision is the cost and latency trade-off, not which model is 'smartest.'",
+    unsolved:"Self-host only when call volume makes API pricing untenable, or when you need sub-100ms latency that API round-trips cannot deliver.",
+    ext:null },
+
+  { id:2, key:"tools", name:"Protocols & tools", color:"var(--l2)",
+    sub:"How your agent calls external tools and APIs: through MCP servers, browser automation, or agent-to-agent protocols.",
+    state:{v:"None",pct:6,note:"Call a tool, get a response, done. No session, no memory between calls."},
+    lock:{v:"Low",pct:22,note:"MCP is an open standard. Build MCP servers and any MCP-compatible agent can use them."},
+    gap:{v:"Medium",pct:50,note:"Your demo MCP server works until someone sends a malicious tool description. Security and governance are the gap."},
+    players:["MCP — 97M monthly SDK downloads","Adopted by OpenAI, Google, Microsoft","Donated to the Linux Foundation","Browser Use — 78K GitHub stars","IBM ACP","Google A2A"],
+    pros:["The protocol debate is settled — one standard, broad adoption","Open standard means tools transfer across every framework camp","Browser agents went from non-existent (2024) to production-real"],
+    cons:["Security is the open problem — MCP says nothing about hardening","Agent-to-agent coordination (ACP, A2A) has no critical mass yet","Need multi-agent coordination today? You build it yourself at the framework layer"],
+    honest:"The protocol debate is over. MCP won. The only question left is how you lock down your MCP servers before someone exploits them.",
+    unsolved:"MCP standardized how agents use tools. It says nothing about how agents talk to each other. If you need multi-agent coordination today, you are building it yourself.",
+    ext:{label:"Endor Labs — security reality check", html:"Across 2,614 MCP servers analyzed: <b>82%</b> use file operations prone to path traversal (CWE-22), <b>67%</b> hit code injection (CWE-94), <b>34%</b> command injection (CWE-78). Named CVEs already landed in Anthropic's own reference mcp-server-git and the Framelink Figma server (600K+ downloads). The lesson: treat LLM outputs and MCP tool arguments as untrusted input. <a href='https://www.endorlabs.com/learn/classic-vulnerabilities-meet-ai-infrastructure-why-mcp-needs-appsec' target='_blank' rel='noopener'>Source →</a>"} },
+
+  { id:3, key:"memory", name:"Memory & knowledge", color:"var(--l3)",
+    sub:"How your agent stores and retrieves what it knows: in-context state, vector search, or persistent memory across sessions.",
+    state:{v:"Highest",pct:100,note:"This IS the state layer. You decide what the agent remembers, how it retrieves it, and when it forgets."},
+    lock:{v:"Medium",pct:52,note:"pgvector is portable — it is just Postgres. Specialized tools like Mem0 or Zep are harder to migrate away from."},
+    gap:{v:"Large",pct:78,note:"Demo memory works because context windows are big enough. Production breaks when conversations get long and the agent forgets the important parts."},
+    players:["Context windows — Gemini 1M+, Claude 200K","pgvector / Postgres (default)","GraphRAG · Neo4j","Mem0 · Zep · Letta","Memory blocks (structured fields)","Sleep-time compute (research)"],
+    pros:["Now a first-class architectural primitive, not a vector-DB afterthought","'Context engineering' replaced 'prompt engineering' as the core discipline","pgvector covers most teams — Postgres with an extension"],
+    cons:["Highest-complexity layer in the stack","Bigger context windows did not kill memory — they changed the trade-off","Deciding what to drop is harder than deciding what to store"],
+    honest:"Most teams overcomplicate memory. Start with conversation history in Postgres and a structured system prompt. Add vector search when your history exceeds context limits. Add agentic memory management only when your agent needs to learn across sessions.",
+    unsolved:"In-context memory breaks when agents must share memory across instances or hold state across provider switches. That is where dedicated infra (Letta, Zep, Mem0) earns its keep.",
+    ext:{label:"What changed since 2024 (Letta)", html:"In the original 2024 stack, memory was a subset of 'storage' — pick a vector database and do RAG. By 2026 it is three distinct tiers (in-context, vector search, persistent cross-session) feeding the same place: the context window the agent sees on every call. <a href='https://www.letta.com/blog/ai-agents-stack' target='_blank' rel='noopener'>Source →</a>"} },
+
+  { id:4, key:"frameworks", name:"Frameworks & SDKs", color:"var(--l4)",
+    sub:"How you wire the model calls, tool use, and control flow together: a provider SDK, a graph framework like LangGraph, or raw code.",
+    state:{v:"You define it",pct:64,note:"Provider SDKs manage state for you. LangGraph makes you define every transition. Build-it-yourself means you roll your own."},
+    lock:{v:"Highest",pct:96,note:"Orchestration code does not port. A LangGraph agent rewritten for CrewAI is a new codebase. Provider SDKs are worse — locked to one model too."},
+    gap:{v:"Large",pct:80,note:"Demo works because nothing goes wrong. Production means tool failures, retries, timeouts, and humans who approve before the agent acts."},
+    players:["OpenAI Agents SDK (from Swarm)","Google ADK","Microsoft Semantic Kernel · AutoGen","Hugging Face smolagents","LangGraph v1.0 — Uber, JPMorgan, LinkedIn, Klarna","CrewAI","No framework (thin wrapper)"],
+    pros:["Three real camps now: provider SDK, graph framework, or raw code","Provider SDK + a few tools gets you to production fastest","'Build it yourself' gives full control until you outgrow the wrapper"],
+    cons:["Highest lock-in in the entire stack — orchestration does not migrate","Most teams pick too much framework for what they are building","LangChain ≠ LangGraph: LangChain is integration, LangGraph is orchestration"],
+    honest:"Most teams pick too much framework. If your agent calls a model and a few tools, you don't need LangGraph. A provider SDK and a couple of tool calls will get you to production faster than any graph.",
+    unsolved:"The framework you pick determines your migration cost. MCP is the one layer that transfers across all three camps — orchestration is the one that does not.",
+    ext:null },
+
+  { id:5, key:"eval", name:"Eval & observability", color:"var(--l5)",
+    sub:"How you measure whether your agent is doing its job: tracing runs, scoring outputs, and catching regressions before users do.",
+    state:{v:"Critical",pct:72,note:"Your agent runs 12 steps; step 3 picked the wrong tool and 4–12 were doomed. If eval only checks final output, you never learn why."},
+    lock:{v:"Moderate",pct:46,note:"Most tools export OpenTelemetry traces, so switching observability is doable. Switching eval frameworks means rebuilding test suites."},
+    gap:{v:"Biggest of any layer",pct:100,note:"Most prototypes have zero eval. You do not feel the pain until production users find the failures for you."},
+    players:["OpenTelemetry traces","Fast PR checks (right tool called?)","Nightly LLM-as-judge regression","Continuous production drift alerts","Context-Bench (memory)","Recovery-Bench (error recovery)","Terminal-Bench (coding)"],
+    pros:["'Evaluation as infrastructure' converging on three clear tiers","Agent-specific benchmarks now exist for memory, recovery, coding","Teams that built eval before deploy do not debug blind"],
+    cons:["The single biggest demo-to-production gap in the stack","Strong only for single-turn and tool-calling eval today","Multi-agent, long-horizon, and learning-agent eval are unsolved"],
+    honest:"Most teams skip eval until something breaks in production. By then they're debugging blind. The teams that don't have this problem built evals before they deployed.",
+    unsolved:"Current tools are strongest for single-turn and tool-calling eval. Multi-agent eval, long-horizon assessment, and evaluating agents that learn are all unsolved — you build custom.",
+    ext:{label:"LangChain — State of Agent Engineering", html:"Among teams with production agents, <b>89%</b> have implemented observability but only <b>52%</b> have evals. That <b>37-point gap</b> is where production quality dies. <a href='https://www.langchain.com/state-of-agent-engineering' target='_blank' rel='noopener'>Source →</a>"} },
+
+  { id:6, key:"guardrails", name:"Guardrails & safety", color:"var(--l6)",
+    sub:"How you stop your agent doing things it shouldn't: filtering inputs, authorizing tool calls, and validating outputs.",
+    state:{v:"Real-time",pct:84,note:"Guardrails must know what the agent is doing right now to decide what it should not do next. That means tracking agent state live."},
+    lock:{v:"Low",pct:18,note:"Most guardrails are custom policy code you write yourself. NeMo Guardrails is the closest thing to a framework, but you still write most rules."},
+    gap:{v:"Effectively infinite",pct:100,note:"Your demo has no guardrails because nobody is trying to break it. Production will."},
+    players:["'Guardrails before action' pattern","Authorize at tool-execution layer","OWASP MCP Top 10 (beta)","NeMo Guardrails","LangGraph Cloud · Bedrock Agents","Mostly FastAPI + DIY infra"],
+    pros:["Now its own discipline, separate from LLM input/output filtering","'Guardrails before action' stops the email before it is sent","OWASP MCP Top 10 is the first real checklist for tool-connected agents"],
+    cons:["Least mature layer — no dominant framework, no established patterns","You are writing policy code from scratch","Deployment is still DIY for most production teams"],
+    honest:"This is the least mature layer in the stack. No dominant framework, no established patterns. You're writing policy code from scratch.",
+    unsolved:"Current tools focus on single-agent systems. In multi-agent workflows where agents delegate, guardrail propagation across boundaries is unsolved — you write custom authorization logic.",
+    ext:{label:"Why output filtering is too late", html:"The 'guardrails before action' pattern came from teams that learned the hard way: enforce authorization at the tool-execution layer, not the output layer. By the time you filter the response, the agent already sent the email. <a href='https://github.com/OWASP/www-project-mcp-top-10/' target='_blank' rel='noopener'>OWASP MCP Top 10 →</a>"} },
+];
+
+// req map per archetype per layer key: core / opt / skip
+const ARCH = [
+  { id:0, num:"Archetype 1", name:"Stateless tool caller", color:"var(--l2)",
+    tag:"A weekend project",
+    examples:"Answers questions from a knowledge base, looks up an order, checks inventory.",
+    stack:{models:"core",tools:"core",memory:"opt",frameworks:"skip",eval:"skip",guardrails:"opt"},
+    stackText:"Provider SDK + MCP + Postgres. No framework, no vector database.",
+    hard:"There is barely a hard part — the main risk is an unhardened MCP server. This is the one most teams overbuild.",
+    effort:"Effort: a weekend", effortColor:"var(--good)" },
+  { id:1, num:"Archetype 2", name:"Multistep workflow", color:"var(--l4)",
+    tag:"Steps depend on each other",
+    examples:"Processes a refund end to end, reviews a PR across five files, triages and routes support tickets.",
+    stack:{models:"core",tools:"core",memory:"opt",frameworks:"core",eval:"core",guardrails:"opt"},
+    stackText:"LangGraph + MCP + eval. Build evals before you deploy.",
+    hard:"Handling tool failures, retries, timeouts, and human approval. Step 3 picks the wrong tool and steps 4–12 are doomed. These agents break silently — which is why eval comes before deploy.",
+    effort:"Effort: weeks · build eval first", effortColor:"var(--warn)" },
+  { id:2, num:"Archetype 3", name:"Agent that learns", color:"var(--l3)",
+    tag:"Improves across sessions",
+    examples:"Remembers your preferences across sessions, gets better at your codebase, tracks project context across weeks.",
+    stack:{models:"core",tools:"core",memory:"core",frameworks:"opt",eval:"core",guardrails:"opt"},
+    stackText:"Memory-first architecture + vector DB + eval. Orchestration is the easy part.",
+    hard:"Deciding what to remember, what gets dropped, and how you stop old context from polluting new answers. The memory architecture must be designed, not inherited from a framework default.",
+    effort:"Effort: memory is the project", effortColor:"var(--l3)" },
+  { id:3, num:"Archetype 4", name:"Multi-agent system", color:"var(--l6)",
+    tag:"Agents delegate to agents",
+    examples:"Agents delegate to other agents, split a research task across specialists, run parallel workstreams.",
+    stack:{models:"core",tools:"core",memory:"core",frameworks:"core",eval:"core",guardrails:"core"},
+    stackText:"The full stack — all six layers.",
+    hard:"Two agents passing context is already hard to debug. Five is impossible without trace-level evals on every handoff. Build eval infrastructure before you build the second agent. Guardrail propagation across agent boundaries is still unsolved.",
+    effort:"Effort: the whole stack", effortColor:"var(--bad)" },
+];
+
+const CASE = [
+  {n:"Layer 1 · Inference", h:"Multi-model routing", p:"Hundreds of millions of daily requests. Cursor routes between Claude, GPT-4, and its own fine-tuned models depending on the task."},
+  {n:"Layer 2 · Protocols", h:"MCP into your dev environment", p:"MCP servers connect to editors, terminals, filesystems, and Git — how the agent reads your code and runs commands."},
+  {n:"Layer 3 · Memory", h:"Codebase-aware retrieval", p:"The agent does not read your whole repo. It retrieves the files that matter for this specific edit, with reranking."},
+  {n:"Layer 4 · Frameworks", h:"Custom orchestration + RL loops", p:"Not LangGraph, not a provider SDK. Purpose-built control flow for code generation, review, and iteration."},
+  {n:"Layer 5 · Eval", h:"Eval running in production", p:"Cursor retrains its acceptance-rate model every 90 minutes based on whether users accept or reject suggestions."},
+  {n:"Layer 6 · Guardrails", h:"Sandboxed execution", p:"The agent can write and run code, but inside a container that limits what it can touch. Sandboxing prevents runaway agents."},
+];
+
+const REQ_LABEL = {core:"CORE", opt:"LIGHT", skip:"SKIP"};
+
+/* ---------------- TABS ---------------- */
+document.querySelectorAll('.tab').forEach(t=>{
+  t.onclick=()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById(t.dataset.v).classList.add('active');
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+});
+function goTab(v){document.querySelector('.tab[data-v="'+v+'"]').click();}
+
+/* ---------------- DECIDE ---------------- */
+const answers={memory:null,steps:null,agents:null};
+document.querySelectorAll('#decide .q').forEach(q=>{
+  const key=q.dataset.q;
+  q.querySelectorAll('.opt').forEach(o=>{
+    o.onclick=()=>{
+      q.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel'));
+      o.classList.add('sel');
+      answers[key]=o.dataset.val;
+      evalVerdict();
+    };
+  });
+});
+function archIndexFromAnswers(){
+  if(answers.agents==='yes') return 3;
+  if(answers.memory==='yes') return 2;
+  if(answers.steps==='yes') return 1;
+  return 0;
+}
+function evalVerdict(){
+  if(answers.memory===null||answers.steps===null||answers.agents===null) return;
+  const a=ARCH[archIndexFromAnswers()];
+  const v=document.getElementById('verdict');
+  v.classList.add('live');
+  document.getElementById('v-name').textContent=a.name;
+  document.getElementById('v-stack').innerHTML='<b>Stack:</b> '+a.stackText;
+  document.getElementById('v-pills').innerHTML=LAYERS.map(l=>{
+    const r=a.stack[l.key];
+    if(r==='skip') return '';
+    const c=r==='core'?'var(--good)':'#b9a8d6';
+    return '<span class="pill" style="color:'+c+'">'+l.name+(r==='opt'?' · light':'')+'</span>';
+  }).join('');
+  document.getElementById('v-mini').textContent='Hard part: '+a.hard;
+  document.getElementById('v-go').onclick=(e)=>{e.preventDefault();renderArchDetail(a.id);goTab('arch');};
+}
+document.getElementById('v-reset').onclick=()=>{
+  answers.memory=answers.steps=answers.agents=null;
+  document.querySelectorAll('#decide .opt').forEach(x=>x.classList.remove('sel'));
+  document.getElementById('verdict').classList.remove('live');
+  document.getElementById('v-name').textContent='Answer the questions above';
+  document.getElementById('v-stack').innerHTML='';document.getElementById('v-pills').innerHTML='';document.getElementById('v-mini').textContent='';
+};
+
+/* ---------------- ARCHETYPES ---------------- */
+const ag=document.getElementById('archGrid');
+ARCH.forEach(a=>{
+  const div=document.createElement('div');div.className='acard';
+  const minis=LAYERS.map(l=>{
+    const r=a.stack[l.key];
+    const bg=r==='core'?l.color:(r==='opt'?'#4a4360':'#222a3c');
+    return '<div class="lm" style="background:'+bg+'"></div>';
+  }).join('');
+  div.innerHTML=
+    '<div class="ah"><div class="anum">'+a.num+'</div><h3>'+a.name+'</h3><div class="atag">'+a.tag+'</div>'+
+    '<div class="layers-mini">'+minis+'</div></div>'+
+    '<div class="ab">'+a.examples+'</div>'+
+    '<div class="effort" style="color:'+a.effortColor+'">'+a.effort+'</div>';
+  div.dataset.arch=a.id;
+  div.onclick=()=>renderArchDetail(a.id);
+  ag.appendChild(div);
+});
+
+function renderArchDetail(id){
+  const a=ARCH[id];
+  document.querySelectorAll('#archGrid .acard').forEach(c=>c.classList.toggle('sel',+c.dataset.arch===id));
+  const rows=LAYERS.map(l=>{
+    const r=a.stack[l.key];
+    return '<div class="lrow '+(r==='skip'?'dim':'')+'" onclick="openLayerFrom('+(l.id-1)+')">'+
+      '<span class="lnum">'+l.id+'</span>'+
+      '<span class="ldot" style="background:'+l.color+'"></span>'+
+      '<span class="lname">'+l.name+'</span>'+
+      '<span class="ldesc">'+l.sub.split(':')[0]+'</span>'+
+      '<span class="req '+r+'">'+REQ_LABEL[r]+'</span></div>';
+  }).join('');
+  const d=document.getElementById('archDetail');
+  d.innerHTML=
+    '<div class="layer-detail open">'+
+      '<div class="ld-head"><span class="ldot" style="background:'+a.color+'"></span>'+
+      '<div><h3>'+a.name+'</h3><div class="sub">'+a.examples+'</div></div></div>'+
+      '<div class="stack-line" style="margin:16px 0 4px"><b style="color:var(--acc2)">Stack:</b> '+a.stackText+'</div>'+
+      '<p class="hint" style="margin:2px 0 6px">Tap any layer to jump into its deep-dive.</p>'+
+      '<div class="stackviz">'+rows+'</div>'+
+      '<div class="honest" style="border-left-color:'+a.color+';background:#16161f"><div class="hl" style="color:'+a.color+'">The hard part</div><p style="font-style:normal">'+a.hard+'</p></div>'+
+      (a.id===3?caseHTML():'')+
+    '</div>';
+  d.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function caseHTML(){
+  return '<div style="margin-top:20px;border-top:1px solid var(--line);padding-top:18px">'+
+    '<div class="hl" style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--acc2);font-weight:800">Real-world example · all six layers</div>'+
+    '<p class="mini" style="margin:7px 0 12px">Coding agents (Cursor, Claude Code, Codex, Windsurf) are the most proven full-stack agents, running at hundreds of millions of requests a day. Here is how every layer shows up at once:</p>'+
+    '<div class="case">'+CASE.map(c=>'<div class="ccard"><div class="cn">'+c.n+'</div><h4>'+c.h+'</h4><p>'+c.p+'</p></div>').join('')+'</div>'+
+    '<p class="mini" style="margin-top:12px"><b style="color:var(--ink)">The tell of a mature stack:</b> the framework layer is custom orchestration with RL loops (not LangGraph, not a provider SDK), and eval runs in production continuously — Cursor retrains its acceptance-rate model every 90 minutes on whether users accept or reject suggestions. The hard layers are designed, not inherited.</p>'+
+  '</div>';
+}
+function openLayerFrom(idx){ goTab('layers'); setTimeout(()=>openLayer(idx),120); }
+
+/* ---------------- LAYER DEEP DIVE ---------------- */
+const ls=document.getElementById('layerStack');
+LAYERS.forEach((l,i)=>{
+  const row=document.createElement('div');row.className='lrow';
+  row.innerHTML='<span class="lnum">'+l.id+'</span>'+
+    '<span class="ldot" style="background:'+l.color+'"></span>'+
+    '<span class="lname">'+l.name+'</span>'+
+    '<span class="ldesc">'+l.sub+'</span>';
+  row.onclick=()=>openLayer(i);
+  ls.appendChild(row);
+});
+function bar(pct,color){return '<div class="bar"><i style="width:'+pct+'%;background:'+color+'"></i></div>';}
+function openLayer(i){
+  const l=LAYERS[i];
+  document.querySelectorAll('#layerStack .lrow').forEach((r,idx)=>r.style.borderColor=idx===i?l.color:'');
+  const d=document.getElementById('layerDetail');
+  d.classList.add('open');
+  d.innerHTML=
+    '<div class="ld-head"><span class="ldot" style="background:'+l.color+'"></span>'+
+      '<div><h3>'+l.id+'. '+l.name+'</h3><div class="sub">'+l.sub+'</div></div></div>'+
+    '<div class="scores">'+
+      score('State to manage',l.state,l.color)+
+      score('Vendor lock-in',l.lock,l.color)+
+      score('Demo → production gap',l.gap,l.color)+
+    '</div>'+
+    '<div class="players" style="margin-bottom:18px">'+l.players.map(p=>'<span class="chip">'+p+'</span>').join('')+'</div>'+
+    '<div class="twocol">'+
+      '<div class="box"><h4 style="color:var(--good)">Strengths</h4><ul class="pros">'+l.pros.map(x=>'<li>'+x+'</li>').join('')+'</ul></div>'+
+      '<div class="box"><h4 style="color:var(--bad)">Watch-outs</h4><ul class="cons">'+l.cons.map(x=>'<li>'+x+'</li>').join('')+'</ul></div>'+
+    '</div>'+
+    '<div class="honest"><div class="hl">The honest take</div><p>'+l.honest+'</p></div>'+
+    '<div class="unsolved"><b>Still unsolved:</b> '+l.unsolved+'</div>'+
+    (l.ext?'<div class="ext"><div class="el">'+l.ext.label+'</div><p>'+l.ext.html+'</p></div>':'');
+  d.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function score(label,o,color){
+  return '<div class="score"><div class="sl">'+label+'</div><div class="sv">'+o.v+'</div>'+bar(o.pct,color)+'<div class="note">'+o.note+'</div></div>';
+}
+openLayer(0);
+
+/* ---------------- MATRIX ---------------- */
+const mx=document.getElementById('mxTable');
+let head='<thead><tr><th class="row">Layer</th>'+ARCH.map(a=>'<th>'+a.name+'</th>').join('')+
+  '<th>State</th><th>Lock-in</th><th>Demo→Prod</th></tr></thead>';
+const axisShort={
+  models:["Low","Hi/Lo","Smallest"], tools:["None","Low","Medium"], memory:["Highest","Medium","Large"],
+  frameworks:["Varies","Highest","Large"], eval:["High","Moderate","Biggest"], guardrails:["Live","Low","Infinite"]
+};
+const axisColor=v=>{
+  v=v.toLowerCase();
+  if(/(highest|biggest|infinite|hi)/.test(v))return'var(--bad)';
+  if(/(large|medium|high|varies|live|moderate)/.test(v))return'var(--warn)';
+  return'var(--good)';
+};
+let body='<tbody>'+LAYERS.map(l=>{
+  const cells=ARCH.map(a=>{
+    const r=a.stack[l.key];
+    const cls=r==='core'?'c-core':(r==='opt'?'c-opt':'c-skip');
+    return '<td><span class="cell '+cls+'">'+REQ_LABEL[r]+'</span></td>';
+  }).join('');
+  const ax=axisShort[l.key];
+  const axc=ax.map(v=>'<td class="axis-cell" style="color:'+axisColor(v)+'">'+v+'</td>').join('');
+  return '<tr><th class="row"><span class="ldot" style="display:inline-block;width:10px;height:10px;border-radius:3px;background:'+l.color+';margin-right:7px"></span>'+l.name+'</th>'+cells+axc+'</tr>';
+}).join('')+'</tbody>';
+mx.innerHTML=head+body;
+</script>
+</body>
+</html>
